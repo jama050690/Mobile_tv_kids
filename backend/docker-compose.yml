@@ -1,0 +1,90 @@
+# Lokal development:   docker compose up -d postgres redis   (API'ni hostda npm run start:dev bilan)
+# To'liq stack:        docker compose --profile full up -d --build
+# Production (Nginx):  docker compose --profile full --profile proxy up -d --build
+
+name: kidstv
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kidstv}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env da berilishi shart}
+      POSTGRES_DB: ${POSTGRES_DB:-kidstv}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kidstv} -d ${POSTGRES_DB:-kidstv}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    profiles: ["full"]
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kidstv}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-kidstv}?schema=public
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3000:3000"
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  nginx:
+    profiles: ["proxy"]
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./nginx/certbot/conf:/etc/letsencrypt:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+
+  # Birinchi sertifikat (nginx hali ishlamayotganda, 80-port bo'sh bo'lishi kerak):
+  #   docker compose --profile certbot run --rm --service-ports certbot
+  # Yangilash (nginx ishlab turganda, webroot orqali):
+  #   docker compose --profile certbot run --rm --entrypoint "certbot renew --webroot -w /var/www/certbot" certbot
+  #   docker compose exec nginx nginx -s reload
+  certbot:
+    profiles: ["certbot"]
+    image: certbot/certbot:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    entrypoint: >
+      sh -c "certbot certonly --standalone
+      -d ${DOMAIN} --email ${LETSENCRYPT_EMAIL} --agree-tos --no-eff-email --non-interactive"
+
+volumes:
+  pgdata:
