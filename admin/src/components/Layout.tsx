@@ -4,13 +4,20 @@ import { ROLE_LABEL } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import { useUi } from './Toast';
 
-const NAV = [
+interface NavItem {
+  to: string;
+  label: string;
+  icon: string;
+  end?: boolean;
+}
+
+const NAV: NavItem[] = [
   { to: '/', label: 'Bosh sahifa', icon: '🏠', end: true },
   { to: '/schedule', label: 'Efir jadvali', icon: '🗓️' },
   { to: '/programs', label: 'Multfilmlar', icon: '🎬' },
   { to: '/channels', label: 'Kanallar', icon: '📺' },
 ];
-const SUPER_NAV = [
+const SUPER_NAV: NavItem[] = [
   { to: '/regions', label: 'Davlatlar / Timezone', icon: '🌍' },
   { to: '/users', label: 'Adminlar', icon: '👤' },
 ];

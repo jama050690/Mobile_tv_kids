@@ -68,6 +68,8 @@ services:
       - ./nginx/templates:/etc/nginx/templates:ro
       - ./nginx/certbot/conf:/etc/letsencrypt:ro
       - ./nginx/certbot/www:/var/www/certbot:ro
+      # Admin panel: avval `cd ../admin && npm ci && npm run build`
+      - ../admin/dist:/usr/share/nginx/admin:ro
 
   # Birinchi sertifikat (nginx hali ishlamayotganda, 80-port bo'sh bo'lishi kerak):
   #   docker compose --profile certbot run --rm --service-ports certbot
