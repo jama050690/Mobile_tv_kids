@@ -43,7 +43,8 @@ compose() {
 [[ -f "$BACKEND/docker-compose.yml" && -f "$ADMIN/package.json" ]] || die "Loyiha tuzilmasi topilmadi: $ROOT"
 if [[ -r /etc/os-release ]]; then
   . /etc/os-release
-  [[ "${ID:-}" == "ubuntu" || "${ID_LIKE:-}" == *debian* ]] || warn "Skript Ubuntu uchun yozilgan (sizda: ${PRETTY_NAME:-noma'lum})"
+  OS_NAME="${PRETTY_NAME:-unknown}"
+  [[ "${ID:-}" == "ubuntu" || "${ID_LIKE:-}" == *debian* ]] || warn "Skript Ubuntu uchun yozilgan (sizda: $OS_NAME)"
 fi
 
 # ---------------------------------------------------------------------
