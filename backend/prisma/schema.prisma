@@ -1,0 +1,149 @@
+// Kids TV — ma'lumotlar bazasi sxemasi
+// Barcha vaqtlar UTC (TIMESTAMPTZ) formatida saqlanadi.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Yosh toifasi (kanal va kontent uchun)
+enum AgeGroup {
+  AGE_0_3
+  AGE_4_7
+  AGE_8_12
+  ALL
+}
+
+enum StreamType {
+  HLS
+  MP4
+}
+
+enum SlotStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+}
+
+enum UrlHealth {
+  UNKNOWN
+  OK
+  BROKEN
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  CONTENT_MANAGER
+}
+
+model Channel {
+  id          String         @id @default(uuid()) @db.Uuid
+  title       String         @db.VarChar(120)
+  slug        String         @unique @db.VarChar(80)
+  number      Int            @unique
+  description String?        @db.VarChar(500)
+  logoUrl     String?        @map("logo_url") @db.VarChar(2048)
+  ageGroup    AgeGroup       @default(ALL) @map("age_group")
+  isActive    Boolean        @default(true) @map("is_active")
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  slots       ScheduleSlot[]
+
+  @@index([isActive, number])
+  @@map("channels")
+}
+
+/// Multfilm / ko'rsatuv
+model Program {
+  id                String         @id @default(uuid()) @db.Uuid
+  title             String         @db.VarChar(200)
+  description       String?        @db.VarChar(2000)
+  videoUrl          String         @map("video_url") @db.VarChar(2048)
+  fallbackUrl       String?        @map("fallback_url") @db.VarChar(2048)
+  streamType        StreamType     @map("stream_type")
+  isLiveStream      Boolean        @default(false) @map("is_live_stream")
+  durationSec       Int            @map("duration_sec")
+  thumbnailUrl      String?        @map("thumbnail_url") @db.VarChar(2048)
+  ageRating         AgeGroup       @default(ALL) @map("age_rating")
+  isActive          Boolean        @default(true) @map("is_active")
+  urlStatus         UrlHealth      @default(UNKNOWN) @map("url_status")
+  urlError          String?        @map("url_error") @db.VarChar(500)
+  urlCheckedAt      DateTime?      @map("url_checked_at") @db.Timestamptz(3)
+  fallbackUrlStatus UrlHealth      @default(UNKNOWN) @map("fallback_url_status")
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  slots             ScheduleSlot[]
+
+  @@index([isActive])
+  @@index([urlStatus])
+  @@map("programs")
+}
+
+/// Efir jadvali (EPG). Bitta kanalda slotlar ustma-ust tushmaydi
+/// (DB darajasida EXCLUDE constraint bilan kafolatlanadi — migration.sql ga qarang).
+model ScheduleSlot {
+  id          String     @id @default(uuid()) @db.Uuid
+  channelId   String     @map("channel_id") @db.Uuid
+  programId   String     @map("program_id") @db.Uuid
+  startsAtUtc DateTime   @map("starts_at_utc") @db.Timestamptz(3)
+  endsAtUtc   DateTime   @map("ends_at_utc") @db.Timestamptz(3)
+  status      SlotStatus @default(SCHEDULED)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  channel     Channel    @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  program     Program    @relation(fields: [programId], references: [id], onDelete: Restrict)
+
+  @@index([channelId, startsAtUtc])
+  @@index([channelId, endsAtUtc])
+  @@index([programId])
+  @@index([status, endsAtUtc])
+  @@map("schedule_slots")
+}
+
+/// Davlatlar va ularning timezone'lari
+model Region {
+  code            String   @id @db.VarChar(2) // ISO 3166-1 alpha-2
+  name            String   @db.VarChar(100)
+  defaultTimezone String   @map("default_timezone") @db.VarChar(64)
+  timezones       String[]
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("regions")
+}
+
+model AdminUser {
+  id            String         @id @default(uuid()) @db.Uuid
+  email         String         @unique @db.VarChar(200)
+  passwordHash  String         @map("password_hash")
+  fullName      String?        @map("full_name") @db.VarChar(120)
+  role          AdminRole      @default(CONTENT_MANAGER)
+  isActive      Boolean        @default(true) @map("is_active")
+  lastLoginAt   DateTime?      @map("last_login_at") @db.Timestamptz(3)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  refreshTokens RefreshToken[]
+
+  @@map("admin_users")
+}
+
+/// Refresh token'lar faqat SHA-256 hash ko'rinishida saqlanadi (rotation + reuse detection)
+model RefreshToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  adminId    String    @map("admin_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash") @db.VarChar(64)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(3)
+  userAgent  String?   @map("user_agent") @db.VarChar(300)
+  ip         String?   @db.VarChar(64)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  admin      AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@map("refresh_tokens")
+}
