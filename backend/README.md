@@ -39,8 +39,14 @@ docker compose exec api node dist/database/seed.js    # seed (bir marta)
 # .env:  NODE_ENV=production, DOMAIN=api.sizningdomen.uz, LETSENCRYPT_EMAIL=..., COOKIE_SECURE=true,
 #        SWAGGER_ENABLED=false, CORS_ORIGINS=https://admin.sizningdomen.uz, kuchli parollar
 docker compose --profile certbot run --rm --service-ports certbot   # 1-marta SSL sertifikat
+(cd ../admin && npm ci && npm run build)                            # admin panel -> ../admin/dist
 docker compose --profile full --profile proxy up -d --build
 ```
+
+Admin panel shu domenning o'zida ochiladi: `https://DOMAIN/` (API — `https://DOMAIN/api/v1`).
+Panel va API bitta origin'da bo'lgani uchun panelga CORS kerak emas, cookie `SameSite=Strict` ishlaydi.
+Panelni yangilash: `cd ../admin && npm run build` — nginx'ni qayta ishga tushirish shart emas.
+Batafsil: [`../admin/README.md`](../admin/README.md).
 
 Sertifikat yangilash (cron'ga qo'ying, oyiga 1-2 marta):
 ```bash
