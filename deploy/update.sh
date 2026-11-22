@@ -14,7 +14,13 @@ ADMIN="$ROOT/admin"
 
 info() { echo -e "\n\033[1;34m==>\033[0m \033[1m$*\033[0m"; }
 die()  { echo -e "\n\033[1;31m✖ $*\033[0m\n" >&2; exit 1; }
-compose() { (cd "$BACKEND" && docker compose -f docker-compose.yml -f docker-compose.prod.yml "$@"); }
+env_get() { grep -E "^$1=" "$BACKEND/.env" 2>/dev/null | tail -1 | cut -d= -f2- || true; }
+# PROXY_MODE=host → tizim nginx'i ishlatiladi (install.sh aniqlagan)
+compose() {
+  local files=(-f docker-compose.yml -f docker-compose.prod.yml)
+  [[ "$(env_get PROXY_MODE)" == "host" ]] && files+=(-f docker-compose.hostnginx.yml)
+  (cd "$BACKEND" && docker compose "${files[@]}" "$@")
+}
 
 [[ $EUID -eq 0 ]] || die "sudo bash deploy/update.sh"
 [[ -f "$BACKEND/.env" ]] || die "backend/.env yo'q — avval: sudo bash deploy/install.sh"
@@ -30,8 +36,14 @@ docker run --rm -v "$ADMIN":/app -w /app node:22-alpine \
   sh -c "npm ci --no-audit --no-fund --loglevel=error && npm run build" | tail -3
 
 info "API build va qayta ishga tushirish"
-compose --profile full --profile proxy up -d --build --remove-orphans
-compose exec -T nginx nginx -s reload >/dev/null 2>&1 || true
+if [[ "$(env_get PROXY_MODE)" == "host" ]]; then
+  compose --profile full up -d --build --remove-orphans
+  chmod o+rx "$ROOT" "$ADMIN" "$ADMIN/dist"
+  nginx -t >/dev/null 2>&1 && systemctl reload nginx || echo "    ⚠ tizim nginx'ida xato: nginx -t"
+else
+  compose --profile full --profile proxy up -d --build --remove-orphans
+  compose exec -T nginx nginx -s reload >/dev/null 2>&1 || true
+fi
 
 echo -n "    API kutilmoqda "
 for i in $(seq 1 60); do

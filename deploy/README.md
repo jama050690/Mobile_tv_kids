@@ -33,7 +33,10 @@ Yangilash: `cd /opt/kidstv && sudo bash deploy/update.sh` (o'zi `git pull` qilad
 
 ## Talablar va to'qnashuvlar
 
-- 80 va 443 portlar bo'sh bo'lishi kerak. Skript buni tekshiradi va band qilgan dasturni ko'rsatadi.
+- **Serverda tizim nginx'i (boshqa saytlar) bo'lsa** — skript buni o'zi aniqlaydi va Kids TV'ni unga
+  alohida sayt sifatida qo'shadi: `/etc/nginx/sites-available/kidstv.conf`. Boshqa saytlarga tegilmaydi,
+  API faqat `127.0.0.1:3010` da (`.env`: `PROXY_MODE=host`, `API_HOST_PORT`). SSL — tizim `certbot`'i bilan.
+- Tizim nginx'i bo'lmasa — 80/443 ni Docker ichidagi nginx egallaydi.
 - **coturn**: odatda 3478/5349 portlarda ishlaydi, shuning uchun to'qnashmaydi. Agar `tls-listening-port=443` bo'lsa, 5349 ga o'tkazing.
 - Postgres, Redis va API tashqariga ochilmaydi (`docker-compose.prod.yml`). Serverdagi boshqa Redis/Postgres bilan to'qnashmaydi.
 - ufw yoqilgan bo'lsa, faqat 80/443 ochiladi. Boshqa qoidalarga tegilmaydi.
