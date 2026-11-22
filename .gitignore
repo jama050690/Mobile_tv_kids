@@ -1,0 +1,47 @@
+# ============ Umumiy (monorepo) ============
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*.log
+
+# Secrets — har qanday papkada
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.jks
+*.keystore
+key.properties
+google-services.json
+GoogleService-Info.plist
+
+# ============ Backend (NestJS) ============
+backend/node_modules/
+backend/dist/
+backend/coverage/
+backend/*.tsbuildinfo
+backend/nginx/certbot/
+
+# ============ Admin panel (React / Next.js / Vite) ============
+admin/node_modules/
+admin/dist/
+admin/.next/
+admin/out/
+
+# ============ Mobile (Flutter) ============
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/.pub-cache/
+mobile/.pub/
+mobile/build/
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/app/release/
