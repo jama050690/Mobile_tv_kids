@@ -1,0 +1,12 @@
+# Serverda allaqachon tizim nginx'i ishlayotgan bo'lsa (boshqa saytlar bilan) ishlatiladi.
+# deploy/install.sh avtomatik qo'shadi (.env: PROXY_MODE=host):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.hostnginx.yml --profile full up -d
+#
+# API faqat 127.0.0.1:${API_HOST_PORT} da ochiladi — tashqaridan ko'rinmaydi,
+# tizim nginx'i (deploy/nginx-host.conf.template) so'rovlarni shu portga uzatadi.
+# Docker ichidagi nginx ishga tushirilmaydi (proxy profili yoqilmaydi).
+
+services:
+  api:
+    ports:
+      - "127.0.0.1:${API_HOST_PORT:-3010}:3000"

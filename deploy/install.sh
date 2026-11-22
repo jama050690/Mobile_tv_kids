@@ -32,9 +32,20 @@ die()  { echo -e "\n\033[1;31m✖ $*\033[0m\n" >&2; exit 1; }
 # .env dan bitta qiymatni o'qish (source qilmasdan — xavfsizroq)
 env_get() { grep -E "^$1=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- || true; }
 
+# PROXY_MODE=host → serverdagi tizim nginx'i ishlatiladi, API 127.0.0.1:API_HOST_PORT da ochiladi
 compose() {
-  (cd "$BACKEND" && docker compose -f docker-compose.yml -f docker-compose.prod.yml "$@")
+  local files=(-f docker-compose.yml -f docker-compose.prod.yml)
+  [[ "$(env_get PROXY_MODE)" == "host" ]] && files+=(-f docker-compose.hostnginx.yml)
+  (cd "$BACKEND" && docker compose "${files[@]}" "$@")
 }
+
+# 80-portni Docker'dan tashqaridagi nginx egallaganmi?
+host_nginx_on_80() {
+  local h; h="$(ss -ltnpH "( sport = :80 )" 2>/dev/null || true)"
+  [[ -n "$h" ]] && ! grep -q docker-proxy <<<"$h" && grep -q '"nginx"' <<<"$h"
+}
+
+HOST_SITE=/etc/nginx/sites-available/kidstv.conf
 
 # ---------------------------------------------------------------------
 # 0. Tekshiruvlar
@@ -153,7 +164,19 @@ if [[ -z "$(env_get NGINX_TEMPLATES)" ]]; then
 fi
 [[ "$DOMAIN" == "api.example.com" ]] && die ".env dagi DOMAIN namunaviy qiymatda qolgan — o'zgartiring yoki bo'sh qoldiring"
 
-if [[ -n "$DOMAIN" ]]; then
+# Serverda boshqa saytlar bilan tizim nginx'i ishlayapti → unga qo'shilamiz (to'xtatmaymiz)
+if [[ -z "$(env_get PROXY_MODE)" ]] && host_nginx_on_80; then
+  [[ -n "$DOMAIN" ]] || die "Serverda tizim nginx'i ishlayapti (80-port). Bu rejimda domen shart — .env dagi DOMAIN ni to'ldiring."
+  printf 'PROXY_MODE=host\nAPI_HOST_PORT=3010\n' >> "$ENV_FILE"
+  ok "Tizim nginx'i topildi — Kids TV unga alohida sayt sifatida qo'shiladi (boshqa saytlarga tegilmaydi)"
+fi
+PROXY_MODE="$(env_get PROXY_MODE)"
+API_HOST_PORT="$(env_get API_HOST_PORT)"; API_HOST_PORT="${API_HOST_PORT:-3010}"
+
+if [[ "$PROXY_MODE" == "host" ]]; then
+  MODE=host
+  [[ "$(env_get COOKIE_SECURE)" == "true" ]] || sed -i 's#^COOKIE_SECURE=.*#COOKIE_SECURE=true#' "$ENV_FILE"
+elif [[ -n "$DOMAIN" ]]; then
   MODE=https
   [[ "$(env_get NGINX_TEMPLATES)" == "./nginx/templates" ]] || sed -i 's#^NGINX_TEMPLATES=.*#NGINX_TEMPLATES=./nginx/templates#' "$ENV_FILE"
   [[ "$(env_get COOKIE_SECURE)" == "true" ]] || sed -i 's#^COOKIE_SECURE=.*#COOKIE_SECURE=true#' "$ENV_FILE"
@@ -167,8 +190,24 @@ ok "Rejim: $MODE ${DOMAIN:+($DOMAIN)}"
 # 3. Portlar
 # ---------------------------------------------------------------------
 info "3/7 Portlar"
-PORTS=(80); [[ $MODE == https ]] && PORTS+=(443)
-for p in "${PORTS[@]}"; do
+PORTS=(80); [[ $MODE != http ]] && PORTS+=(443)
+
+if [[ $MODE == host ]]; then
+  # 80/443 tizim nginx'iniki — bu kutilgan holat. Faqat API porti bo'shligini tekshiramiz.
+  command -v nginx >/dev/null && [[ -d /etc/nginx/sites-enabled ]] \
+    || die "Tizim nginx'i /etc/nginx/sites-enabled tuzilmasida emas — qo'lda sozlash kerak"
+  holder="$(ss -ltnpH "( sport = :$API_HOST_PORT )" 2>/dev/null || true)"
+  if [[ -n "$holder" ]] && ! grep -q docker-proxy <<<"$holder"; then
+    echo "$holder" | sed 's/^/      /'
+    die "$API_HOST_PORT-port band. .env dagi API_HOST_PORT ni boshqa bo'sh portga o'zgartiring (masalan 3011)."
+  fi
+  ok "80/443 — tizim nginx'i, API → 127.0.0.1:$API_HOST_PORT"
+  PORTS_TO_CHECK=()
+else
+  PORTS_TO_CHECK=("${PORTS[@]}")
+fi
+
+for p in "${PORTS_TO_CHECK[@]}"; do
   holder="$(ss -ltnpH "( sport = :$p )" 2>/dev/null || true)"
   if [[ -z "$holder" ]]; then ok "$p bo'sh"
   elif grep -q docker-proxy <<<"$holder"; then ok "$p — docker (bizning nginx)"
@@ -199,7 +238,65 @@ ok "admin/dist tayyor"
 # ---------------------------------------------------------------------
 info "5/7 SSL"
 mkdir -p "$BACKEND/nginx/certbot/conf" "$BACKEND/nginx/certbot/www"
-if [[ $MODE == https ]]; then
+
+# Tizim nginx'iga sayt yozish: shablondan o'zgaruvchilarni qo'yib, nginx -t bilan tekshirib, reload
+install_host_site() {
+  sed -e "s#__DOMAIN__#$DOMAIN#g" \
+      -e "s#__API_PORT__#$API_HOST_PORT#g" \
+      -e "s#__ADMIN_ROOT__#$ADMIN/dist#g" \
+      "$ROOT/deploy/nginx-host.conf.template" > "$HOST_SITE"
+  ln -sf "$HOST_SITE" /etc/nginx/sites-enabled/kidstv.conf
+  if ! nginx -t 2>/tmp/kidstv-nginx-test.log; then
+    cat /tmp/kidstv-nginx-test.log
+    rm -f /etc/nginx/sites-enabled/kidstv.conf   # boshqa saytlar buzilmasin
+    die "Nginx konfiguratsiyasida xato (yuqorida). Kids TV sayti o'chirildi, boshqa saytlar ishlashda davom etadi."
+  fi
+  systemctl reload nginx
+}
+
+if [[ $MODE == host ]]; then
+  # Panel fayllarini www-data o'qiy olishi kerak
+  chmod o+rx "$ROOT" "$ADMIN" "$ADMIN/dist"
+  if [[ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]]; then
+    ok "Sertifikat mavjud"
+  else
+    resolved="$(getent ahostsv4 "$DOMAIN" | awk 'NR==1{print $1}' || true)"
+    [[ -n "$resolved" ]] || die "$DOMAIN DNS'da topilmadi. A-yozuv qo'shilganiga 15-60 daqiqa kuting va qayta ishga tushiring."
+    ok "$DOMAIN -> $resolved"
+    [[ -n "$LE_EMAIL" ]] || die ".env da LETSENCRYPT_EMAIL bo'sh"
+    command -v certbot >/dev/null || apt-get install -y -qq certbot
+
+    # Vaqtinchalik: sertifikat yo'q, shuning uchun faqat HTTP sayt (ACME tekshiruvi uchun)
+    mkdir -p /var/www/certbot
+    cat > "$HOST_SITE" <<EOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $DOMAIN;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 404; }
+}
+EOF
+    ln -sf "$HOST_SITE" /etc/nginx/sites-enabled/kidstv.conf
+    nginx -t >/dev/null 2>&1 || { rm -f /etc/nginx/sites-enabled/kidstv.conf; nginx -t; die "Nginx xatosi"; }
+    systemctl reload nginx
+
+    certbot certonly --webroot -w /var/www/certbot -d "$DOMAIN" \
+      --email "$LE_EMAIL" --agree-tos --no-eff-email --non-interactive \
+      || die "Sertifikat olinmadi. DNS A-yozuvi aynan shu serverga qaraganini va 80-port ochiqligini tekshiring."
+    ok "Sertifikat olindi"
+  fi
+
+  # Yangilash: Ubuntu certbot paketi o'z timer'i bilan yangilaydi; keyin nginx reload
+  mkdir -p /etc/letsencrypt/renewal-hooks/deploy
+  printf '#!/bin/sh\nsystemctl reload nginx\n' > /etc/letsencrypt/renewal-hooks/deploy/kidstv-nginx-reload.sh
+  chmod 755 /etc/letsencrypt/renewal-hooks/deploy/kidstv-nginx-reload.sh
+  rm -f /etc/cron.d/kidstv-certbot
+  ok "Avtomatik yangilash: certbot.timer"
+
+  install_host_site
+  ok "Nginx sayti: $HOST_SITE"
+elif [[ $MODE == https ]]; then
   if [[ -f "$BACKEND/nginx/certbot/conf/live/$DOMAIN/fullchain.pem" ]]; then
     ok "Sertifikat mavjud"
   else
@@ -228,7 +325,8 @@ fi
 # 6. Ishga tushirish
 # ---------------------------------------------------------------------
 info "6/7 Konteynerlar (birinchi build 3-5 daqiqa)"
-compose --profile full --profile proxy up -d --build --remove-orphans
+PROFILES=(--profile full); [[ $MODE != host ]] && PROFILES+=(--profile proxy)
+compose "${PROFILES[@]}" up -d --build --remove-orphans
 
 echo -n "    API kutilmoqda "
 for i in $(seq 1 60); do
@@ -236,7 +334,12 @@ for i in $(seq 1 60); do
   echo -n "."; sleep 3
   if [[ $i -eq 60 ]]; then echo; compose logs --tail=50 api; die "API ishga tushmadi (yuqoridagi log)"; fi
 done
-compose exec -T nginx nginx -t >/dev/null 2>&1 && ok "Nginx konfiguratsiyasi to'g'ri" || { compose logs --tail=30 nginx; die "Nginx xatosi"; }
+if [[ $MODE == host ]]; then
+  curl -fsS "http://127.0.0.1:$API_HOST_PORT/api/v1/health" >/dev/null && ok "Tizim nginx'i → API ulanishi ishlayapti" \
+    || warn "127.0.0.1:$API_HOST_PORT javob bermadi — compose logs api ni tekshiring"
+else
+  compose exec -T nginx nginx -t >/dev/null 2>&1 && ok "Nginx konfiguratsiyasi to'g'ri" || { compose logs --tail=30 nginx; die "Nginx xatosi"; }
+fi
 
 # ---------------------------------------------------------------------
 # 7. Seed (birinchi admin)
@@ -246,7 +349,7 @@ compose exec -T api node dist/database/seed.js | sed 's/^/    /'
 
 # ---------------------------------------------------------------------
 URL="http://$(hostname -I | awk '{print $1}')"
-[[ $MODE == https ]] && URL="https://$DOMAIN"
+[[ $MODE != http ]] && URL="https://$DOMAIN"
 echo
 echo -e "\033[1;32m================ TAYYOR ================\033[0m"
 echo "  Admin panel:  $URL/"
@@ -258,6 +361,7 @@ if [[ -f "$CREDS_FILE" ]]; then
   echo "  (saqlangan:   $CREDS_FILE — kirgandan keyin parolni panelda almashtirib, faylni o'chiring)"
 fi
 echo
+[[ $MODE == host ]] && echo "  Nginx sayti:  $HOST_SITE (boshqa saytlaringiz o'zgarmadi)"
 echo "  Loglar:       cd $BACKEND && docker compose logs -f api"
 echo "  Yangilash:    sudo bash $ROOT/deploy/update.sh"
 echo -e "\033[1;32m========================================\033[0m"
