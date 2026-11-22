@@ -9,4 +9,4 @@
 services:
   api:
     ports:
-      - "127.0.0.1:${API_HOST_PORT:-3010}:3000"
+      - "127.0.0.1:${API_HOST_PORT:-3020}:3000"

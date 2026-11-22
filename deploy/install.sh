@@ -69,6 +69,14 @@ if ! command -v docker >/dev/null; then
   curl -fsSL https://get.docker.com | sh
 fi
 systemctl enable --now docker >/dev/null 2>&1 || true
+
+# RAM kam (<3 GB) va swap yo'q bo'lsa — 2 GB swap (build paytida xotira yetmay qolmasin)
+MEM_MB="$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)"
+if [[ "$MEM_MB" -lt 3000 && -z "$(swapon --show --noheadings)" && ! -f /swapfile ]]; then
+  fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null && swapon /swapfile
+  grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  ok "2 GB swap qo'shildi (RAM: ${MEM_MB} MB)"
+fi
 docker compose version >/dev/null 2>&1 || apt-get install -y -qq docker-compose-plugin
 ok "$(docker --version)"
 ok "$(docker compose version)"
@@ -167,11 +175,17 @@ fi
 # Serverda boshqa saytlar bilan tizim nginx'i ishlayapti → unga qo'shilamiz (to'xtatmaymiz)
 if [[ -z "$(env_get PROXY_MODE)" ]] && host_nginx_on_80; then
   [[ -n "$DOMAIN" ]] || die "Serverda tizim nginx'i ishlayapti (80-port). Bu rejimda domen shart — .env dagi DOMAIN ni to'ldiring."
-  printf 'PROXY_MODE=host\nAPI_HOST_PORT=3010\n' >> "$ENV_FILE"
+  # API uchun birinchi bo'sh portni tanlaymiz (3020 dan) — serverdagi boshqa ilovalar bilan to'qnashmasin
+  FREE_PORT=""
+  for cand in $(seq 3020 3099); do
+    [[ -z "$(ss -ltnH "( sport = :$cand )" 2>/dev/null)" ]] && { FREE_PORT=$cand; break; }
+  done
+  [[ -n "$FREE_PORT" ]] || die "3020-3099 oralig'ida bo'sh port topilmadi"
+  printf 'PROXY_MODE=host\nAPI_HOST_PORT=%s\n' "$FREE_PORT" >> "$ENV_FILE"
   ok "Tizim nginx'i topildi — Kids TV unga alohida sayt sifatida qo'shiladi (boshqa saytlarga tegilmaydi)"
 fi
 PROXY_MODE="$(env_get PROXY_MODE)"
-API_HOST_PORT="$(env_get API_HOST_PORT)"; API_HOST_PORT="${API_HOST_PORT:-3010}"
+API_HOST_PORT="$(env_get API_HOST_PORT)"; API_HOST_PORT="${API_HOST_PORT:-3020}"
 
 if [[ "$PROXY_MODE" == "host" ]]; then
   MODE=host
@@ -199,7 +213,7 @@ if [[ $MODE == host ]]; then
   holder="$(ss -ltnpH "( sport = :$API_HOST_PORT )" 2>/dev/null || true)"
   if [[ -n "$holder" ]] && ! grep -q docker-proxy <<<"$holder"; then
     echo "$holder" | sed 's/^/      /'
-    die "$API_HOST_PORT-port band. .env dagi API_HOST_PORT ni boshqa bo'sh portga o'zgartiring (masalan 3011)."
+    die "$API_HOST_PORT-port band. .env dagi API_HOST_PORT ni boshqa bo'sh portga o'zgartiring (masalan 3021)."
   fi
   ok "80/443 — tizim nginx'i, API → 127.0.0.1:$API_HOST_PORT"
   PORTS_TO_CHECK=()
