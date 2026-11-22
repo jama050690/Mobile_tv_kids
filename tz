@@ -1,0 +1,106 @@
+Ajoyib g‘oya — bolalar uchun ko‘p kanalli virtual TV (mobile-first / TV-style player)! Oddiy VOD (xohlagan payt bosib ko‘rish) emas, balki admin boshqaradigan jadval (EPG/Schedule) asosida, URL manzillar orqali multfilm va ko‘rsatuvlarni uzatadigan, vaqtni esa foydalanuvchi turgan davlat / vaqt mintaqasiga (timezone) moslab chiqaradigan tizim.
+
+Quyida g‘oyangiz asosida tayyor Production TZ va Texnik TZ keltirilgan.
+
+1. Production TZ (Mahsulot va Biznes Mantiqi)
+Mahsulot konsepsiyasi
+Format: Mobil qurilmalar (va planshet/smart TVga moslashuvchan) uchun TV-efir ko‘rinishidagi bolalar platformasi.
+
+Farqi: Foydalanuvchi kanalni tanlaydi va o‘sha paytda efirda ketayotgan multfilm/ko‘rsatuvga ulanadi (virtual linear TV / scheduled playout).
+
+Bolalar xavfsizligi: Yoshga mos kontent (masalan, 0–3, 4–7, 8–12 yosh), ortiqcha tashqi reklamasiz/shubhali havolalarsiz interfeys.
+
+Foydalanuvchi rollari va imkoniyatlari
+Bola / Tomoshabin (Viewer):
+
+Kanallar o‘rtasida tez o‘tish (1-kanal, 2-kanal, 3-kanal... masalan, Multfilm Klassika, Ta’limiy, Inglizcha).
+
+Hozir efirda nima ketayotganini va keyingi ko‘rsatuvni ko‘rish.
+
+O‘z davlati / vaqt mintaqasiga mos efir vaqtini ko‘rish.
+
+Sevimli kanallarni belgilash, ovoz va ekran rejimini boshqarish.
+
+Ota-ona / Nazoratchi (Parental Control — ixtiyoriy/keyingi bosqich):
+
+PIN-kod orqali sozlamalarga kirish, ko‘rish vaqtini cheklash.
+
+Admin / Kontent menejeri (Admin Panel):
+
+Yangi kanallar yaratish, tahrirlash, faollashtirish/o‘chirish (nomi, logotipi, tartib raqami, yosh toifasi).
+
+Multfilm/ko‘rsatuvlar bazasini yuritish (nomi, davomiyligi, yosh chegarasi, poster, video URL — MP4 / HLS .m3u8 / ruxsat etilgan oqim).
+
+Programmani (Schedule / EPG) tuzish: Qaysi kanalda, qaysi kuni va soat nechada qaysi multfilm/ko‘rsatuv ketishini belgilash.
+
+Efir vaqtini UTC yoki markaziy efir vaqti asosida saqlash, foydalanuvchi tomonida esa uning davlati (timezone) bo‘yicha avtomatik hisoblash.
+
+Asosiy foydalanuvchi ssenariylari (User Flow)
+Ilovani ochish: Ilova foydalanuvchining qurilmasidan yoki profilidan davlat/timezone’ni aniqlaydi (masalan, Asia/Tashkent — UTC+5).
+
+Kanal tanlash: Foydalanuvchi kanalni bosadi. Backend joriy vaqtga mos ravishda ayni shu soniyada qaysi multfilm ketayotgani va nechanchi sekundidan boshlab ko‘rsatish kerakligini (seek offset) qaytaradi.
+
+Vaqt zonasi farqi: Agar admin dasturni 18:00 (masalan, UTC+5 yoki UTC asosida belgilangan jadval) ga qo‘ysa, boshqa davlatdagi foydalanuvchi o‘z mahalliy vaqtiga moslashtirilgan soatni ko‘radi.
+
+Admin jadval o‘zgartirishi: Admin yangi ko‘rsatuv qo‘shsa yoki vaqtni o‘zgartirsa, jadval yangilanadi.
+
+Asosiy ekranlar (Screens)
+Splash & Onboarding: Til va davlat/mintaqa (avto-aniqlash + qo‘lda tanlash imkoniyati).
+
+Live TV Player (Asosiy ekran): Yuqori/pastki panelda kanallar ro‘yxati, hozirgi dastur nomi, qolgan vaqt/progress, yosh belgisi.
+
+TV Dasturlar Jadvali (EPG / Schedule): Tanlangan kanal bo‘yicha bugungi ko‘rsatuvlar ro‘yxati (foydalanuvchi vaqtida).
+
+Kanallar katalogi: Barcha bolalar kanallari kartochkalari.
+
+Admin Dashboard: Kanallar CRUD, Kontent/URL boshqaruvi, Dastur jadvali (Calendar/Timeline ko‘rinishida), Davlat/Timezone sozlamalari.
+
+2. Texnik TZ (Arxitektura, Backend va Server)
+Umumiy arxitektura
+Mobile Client: Flutter (iOS va Android uchun bitta kod bazasi; keyinchalik Android TV / Web ko‘rinishiga ham moslash oson).
+
+Admin Panel: React / Next.js (yoki TypeScript + Vite) — jadval, URL va kanallarni qulay boshqarish uchun web-interfeys.
+
+Backend API: NestJS yoki Fastify (TypeScript) — REST API + real-time yangilanishlar uchun WebSocket / SSE (jadval o‘zgarganda ilovaga xabar berish uchun).
+
+Ma’lumotlar bazasi: PostgreSQL (Prisma yoki TypeORM bilan) + Redis (joriy efir holatini keshlash va yuqori yuklamada tez javob berish uchun).
+
+Vaqt va Davlatlar (Timezone) logikasi — Eng muhim qism
+Bazadagi barcha vaqtlar UTC formatida (TIMESTAMPTZ / ISO-8601) saqlanadi.
+
+Har bir dastur slotida: start_time_utc, end_time_utc, duration_seconds, media_url, sort_order bo‘ladi.
+
+Foydalanuvchi ilovasi o‘zining IANA Timezone’ini (masalan, Asia/Tashkent, Europe/Moscow, America/New_York) yuboradi yoki qurilmadan oladi.
+
+Seek / Offset hisoblash: Agar dastur 10:00:00 UTC da boshlangan bo‘lsa va hozir 10:03:20 UTC bo‘lsa, pleer videoni 200-sekunddan boshlab o‘ynatadi. Bu barcha foydalanuvchilarga "jonli efir" hissini beradi.
+
+Agar URL orqali keladigan video muddati dastur slotidan farq qilsa, admin jadvalni validatsiya qiladi yoki avtomatik keyingi dasturga o‘tish logikasi ishlaydi.
+
+URL orqali video uzatish va muammolar
+Qo‘llab-quvvatlanadigan formatlar: .m3u8 (HLS) va to‘g‘ridan-to‘g‘ri .mp4 (range request qo‘llab-quvvatlaydigan URL’lar).
+
+E’tiborli jihat: Tashqi URL’lar vaqt o‘tib o‘chib qolishi, bloklanishi yoki CORS/hotlink chekloviga uchrashi mumkin.
+
+Admin panelda URL tekshiruvchi (Health-check) bo‘lishi kerak (havola ishlayaptimi, formati mosmi).
+
+Zaxira (fallback) URL yoki avtomatik keyingi multfilmga o‘tish mexanizmi ko‘zda tutiladi.
+
+Ma’lumotlar bazasi (Asosiy jadvallar)
+channels: id, title, slug, number, logo_url, age_group, is_active, created_at
+
+programs (multfilm/ko‘rsatuvlar): id, title, description, video_url, stream_type (HLS | MP4), duration_sec, thumbnail_url, age_rating, is_active
+
+schedule_slots (efir jadvali): id, channel_id, program_id, starts_at_utc, ends_at_utc, status (SCHEDULED | LIVE | ENDED)
+
+regions / countries: davlat kodi, nomi, standart timezone’lar, faollik holati
+
+admin_users: autentifikatsiya, rollar (JWT access/refresh token, Argon2/bcrypt).
+
+Server, Xavfsizlik va Deployment
+Server / Hosting: Linux (Ubuntu) VPS / AWS Lightsail yoki Docker konteynerlar (Docker Compose).
+
+Reverse Proxy & SSL: Nginx + Let’s Encrypt (HTTPS), gzip/HTTP2.
+
+Xavfsizlik: Admin API uchun JWT + httpOnly cookie/token himoyasi, Rate Limiting, input validatsiya, API’da tashqi xavfli skript/redirectlarni filtrlash.
+
+Monitoring: Loglar, API health-check, xatoliklar kuzatuvi (masalan, PM2 yoki Docker restart policy).
