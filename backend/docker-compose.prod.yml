@@ -1,0 +1,30 @@
+# Production override — serverda asosiy fayl bilan birga ishlatiladi:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile full --profile proxy up -d --build
+#
+# Nima o'zgaradi:
+#  - postgres / redis / api portlari hostga umuman ochilmaydi (faqat docker tarmog'i ichida).
+#    Serverdagi boshqa xizmatlar (masalan o'z Redis'ingiz 6379 da) bilan to'qnashuv bo'lmaydi.
+#    Tashqaridan faqat nginx (80/443) ko'rinadi.
+#  - postgres va redis loglari cheklanadi.
+# `!reset` uchun Docker Compose v2.24+ kerak (get.docker.com o'rnatadigan versiya mos keladi).
+
+services:
+  postgres:
+    ports: !reset []
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "3" }
+
+  redis:
+    ports: !reset []
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  api:
+    ports: !reset []
+
+  nginx:
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }

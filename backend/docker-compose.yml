@@ -65,7 +65,8 @@ services:
     environment:
       DOMAIN: ${DOMAIN:-localhost}
     volumes:
-      - ./nginx/templates:/etc/nginx/templates:ro
+      # HTTPS (domen bilan): ./nginx/templates  |  faqat IP orqali HTTP: ./nginx/templates-http
+      - ${NGINX_TEMPLATES:-./nginx/templates}:/etc/nginx/templates:ro
       - ./nginx/certbot/conf:/etc/letsencrypt:ro
       - ./nginx/certbot/www:/var/www/certbot:ro
       # Admin panel: avval `cd ../admin && npm ci && npm run build`
