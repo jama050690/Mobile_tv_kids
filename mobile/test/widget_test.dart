@@ -1,30 +1,25 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:kids_tv/main.dart';
+import 'package:kids_tv/l10n/strings.dart';
+import 'package:kids_tv/models/models.dart';
+import 'package:kids_tv/services/server_clock.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('Tarjimalar: barcha tillarda kalitlar bor', () {
+    for (final lang in S.languages.keys) {
+      expect(S(lang).t('appName'), isNotEmpty);
+      expect(S(lang).t('today'), isNot('today'));
+    }
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  test('AgeGroup API qiymatlari', () {
+    expect(AgeGroup.values.map((e) => e.api), containsAll(['AGE_0_3', 'AGE_4_7', 'AGE_8_12', 'ALL']));
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test('ServerClock: server vaqtiga sinxronlanadi', () {
+    final clock = ServerClock();
+    final local = DateTime.now().millisecondsSinceEpoch;
+    // Server 1 soat oldinda, RTT 100ms
+    clock.sync(local + 3600000, local - 100, local);
+    expect((clock.nowMs() - (local + 3600000)).abs(), lessThan(1000));
   });
 }

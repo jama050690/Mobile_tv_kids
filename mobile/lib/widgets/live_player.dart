@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../config.dart';
+import '../l10n/strings.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../services/server_clock.dart';
@@ -357,7 +358,7 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
     return Opacity(opacity: 0.35, child: NetImage(thumb));
   }
 
-  Widget _statusView(dynamic s, VideoPlayerController? vc) {
+  Widget _statusView(S s, VideoPlayerController? vc) {
     String? text;
     IconData icon = Icons.tv_rounded;
     if (_netError) {
@@ -398,7 +399,7 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
     );
   }
 
-  Widget _timeUpView(dynamic s) => Container(
+  Widget _timeUpView(S s) => Container(
         color: Colors.black.withValues(alpha: 0.85),
         alignment: Alignment.center,
         padding: const EdgeInsets.all(24),
@@ -413,7 +414,7 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
         ]),
       );
 
-  Widget _overlayView(dynamic s) {
+  Widget _overlayView(S s) {
     final ch = widget.channel;
     final cur = _now?.current;
     final muted = context.select<SettingsStore, bool>((st) => st.muted);
