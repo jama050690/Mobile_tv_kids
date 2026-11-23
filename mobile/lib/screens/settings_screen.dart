@@ -28,15 +28,15 @@ class SettingsScreen extends StatelessWidget {
         // ---------------- Til ----------------
         _section(s.t('language')),
         Card(
-          child: Column(children: [
-            for (final e in S.languages.entries)
-              RadioListTile<String>(
-                value: e.key,
-                groupValue: st.lang,
-                title: Text(e.value),
-                onChanged: (v) => st.setLang(v!),
-              ),
-          ]),
+          child: RadioGroup<String>(
+            groupValue: st.lang,
+            onChanged: (v) {
+              if (v != null) st.setLang(v);
+            },
+            child: Column(children: [
+              for (final e in S.languages.entries) RadioListTile<String>(value: e.key, title: Text(e.value)),
+            ]),
+          ),
         ),
         const SizedBox(height: 20),
 

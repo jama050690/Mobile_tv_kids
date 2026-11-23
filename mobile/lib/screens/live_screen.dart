@@ -91,7 +91,7 @@ class _LiveScreenState extends State<LiveScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
               itemCount: guide.items.length + 1,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (_, i) {
                 if (i == 0) return _header(s.t('channels'), guide.utcOffset, s.f('serverTime', {'offset': 'UTC${guide.utcOffset}'}));
                 final item = guide.items[i - 1];

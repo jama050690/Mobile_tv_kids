@@ -5,14 +5,14 @@ import '../theme.dart';
 
 /// Yosh belgisi: "4-7", "0+" ...
 class AgeBadge extends StatelessWidget {
-  const AgeBadge.group(AgeGroup g, {super.key})
-      : label = g.label,
-        colorKey = g.label;
+  const AgeBadge._(this.label, this.colorKey, {super.key});
+
+  /// Kanal yosh toifasi
+  factory AgeBadge.group(AgeGroup g, {Key? key}) => AgeBadge._(g.label, g.label, key: key);
 
   /// Dastur yosh chegarasi (ageRating: 0, 3, 6 ...) — "6+"
-  AgeBadge.rating(int rating, {super.key})
-      : label = '$rating+',
-        colorKey = rating <= 3 ? '0-3' : (rating <= 7 ? '4-7' : '8-12');
+  factory AgeBadge.rating(int rating, {Key? key}) =>
+      AgeBadge._('$rating+', rating <= 3 ? '0-3' : (rating <= 7 ? '4-7' : '8-12'), key: key);
 
   final String label;
   final String colorKey;
@@ -51,7 +51,7 @@ class NetImage extends StatelessWidget {
     return Image.network(
       url!,
       fit: fit,
-      errorBuilder: (_, __, ___) => fallback,
+      errorBuilder: (_, _, _) => fallback,
       loadingBuilder: (_, child, p) => p == null ? child : fallback,
     );
   }
