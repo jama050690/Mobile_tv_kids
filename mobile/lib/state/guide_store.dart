@@ -34,6 +34,9 @@ class GuideStore extends ChangeNotifier {
   int revision = 0;
   String? lastEventChannelId;
 
+  /// Kamida bir marta muvaffaqiyatli yuklangan
+  bool get ready => _guide != null;
+
   List<NowState> get items => _guide?.channels ?? const [];
   List<Channel> get channels => items.map((e) => e.channel).toList();
   String get utcOffset => _guide?.utcOffset ?? '';
