@@ -101,7 +101,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       padding: const EdgeInsets.all(24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         const Spacer(),
-        const Icon(Icons.live_tv_rounded, size: 88, color: AppTheme.accent),
+        // Ilova logotipi (assets/icon/app_icon.png)
+        ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: Image.asset('assets/icon/app_icon.png', width: 140, height: 140),
+        ),
         const SizedBox(height: 12),
         Text(s.t('appName'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900)),
         Text(s.t('welcome'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, color: AppTheme.textDim)),

@@ -23,6 +23,8 @@ class AppTheme {
       seedColor: primary,
       brightness: Brightness.dark,
       primary: primary,
+      // Binafsha tugma ustida matn oq bo'lsin (aks holda to'q matn o'qilmaydi)
+      onPrimary: Colors.white,
       secondary: accent,
       surface: surface,
     );

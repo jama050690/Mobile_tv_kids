@@ -44,6 +44,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Ilova ikonkasini Android/iOS uchun barcha o'lchamlarda yaratadi
+  flutter_launcher_icons: ^0.14.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -62,6 +64,21 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Ilova ichida logo sifatida ham ishlatiladi (splash/onboarding)
+  assets:
+    - assets/icon/app_icon.png
+
+# Ikonka generatsiyasi: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  # Android 8+ adaptiv ikonka: fon rangi + markazdagi rasm
+  adaptive_icon_background: "#283C5F"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  min_sdk_android: 21
 
   # To add assets to your application, add an assets section, like this:
   # assets:
