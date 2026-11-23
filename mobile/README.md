@@ -15,7 +15,7 @@ Bolalar uchun jonli TV: telefon/planshetda kanallar xuddi televizordagidek efird
 cd mobile
 flutter pub get
 
-# Production server bilan (standart: https://tv.jamshiddin.uz/api/v1)
+# Production server bilan (standart: https://mobile-tv.jamshiddin.uz/api/v1)
 flutter run
 
 # Lokal backend bilan (Android emulator -> kompyuter = 10.0.2.2)
@@ -25,7 +25,7 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
 
 ## Build
 ```bash
-flutter build apk --release --dart-define=API_BASE_URL=https://tv.jamshiddin.uz/api/v1
+flutter build apk --release --dart-define=API_BASE_URL=https://mobile-tv.jamshiddin.uz/api/v1
 flutter build appbundle --release      # Google Play
 flutter build ipa --release            # iOS (macOS + Xcode)
 ```

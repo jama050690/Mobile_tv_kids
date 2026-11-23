@@ -7,7 +7,7 @@
 class AppConfig {
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://tv.jamshiddin.uz/api/v1',
+    defaultValue: 'https://mobile-tv.jamshiddin.uz/api/v1',
   );
 
   /// HTTP so'rov uchun maksimal kutish
