@@ -39,7 +39,13 @@ class NetImage extends StatelessWidget {
       color: AppTheme.surfaceHi,
       alignment: Alignment.center,
       child: fallbackText != null
-          ? Text(fallbackText!, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.textDim))
+          // FittedBox: kichik logolarda (masalan 24px chip) raqam kesilmasin
+          ? Padding(
+              padding: const EdgeInsets.all(3),
+              child: FittedBox(
+                child: Text(fallbackText!, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.textDim)),
+              ),
+            )
           : Icon(fallbackIcon, color: AppTheme.textDim),
     );
     // Faqat https rasmlar (bolalar ilovasida aralash kontent bo'lmasin)

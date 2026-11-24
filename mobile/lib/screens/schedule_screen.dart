@@ -141,6 +141,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: ChoiceChip(
                     avatar: ChannelLogo(c, size: 24),
+                    // ✓ belgisi logoni yopib qo'ymasin — tanlangani rang bilan ko'rinadi
+                    showCheckmark: false,
                     label: Text(c.title),
                     selected: c.id == channel?.id,
                     onSelected: (_) => guide.select(c.id),

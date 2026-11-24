@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:kids_tv/main.dart' as app;
+import 'package:video_player/video_player.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -61,7 +62,11 @@ void main() {
     expect(noConnection, findsNothing, reason: 'Efir ekranida server xatosi');
     expect(find.textContaining('Multfilm Klassika'), findsWidgets, reason: 'Kanallar ro\'yxati kelmadi');
     debugPrint('E2E: 3/6 Efir (guide/now) OK');
-    await wait(t, 10); // video o'ynashi uchun vaqt (skrinshot olinadi)
+    // Video haqiqatan ochildimi: VideoPlayer widgeti faqat controller initialize bo'lganda chiziladi
+    expect(await waitFor(t, find.byType(VideoPlayer), seconds: 40), isTrue, reason: 'Video ochilmadi');
+    await wait(t, 6);
+    debugPrint('E2E: 3b video o\'ynayapti OK');
+    await wait(t, 2);
 
     // 5) Kanallar katalogi
     await t.tap(tab('Kanallar'));
