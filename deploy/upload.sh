@@ -44,7 +44,9 @@ rsync -az --delete -e "$RSYNC_SSH" \
   --exclude '.DS_Store' \
   --exclude '*.pem' \
   --exclude 'keys/' \
+  --exclude 'mobile/' \
   "$ROOT/" "$TARGET:$DIR/"
+# mobile/ — Flutter ilova serverga kerak emas (build bilan bir necha GB)
 
 echo "==> Serverda o'rnatish / yangilash"
 # -t: install.sh savollar beradi (domen, email) — interaktiv terminal kerak
