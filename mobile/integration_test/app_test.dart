@@ -63,7 +63,7 @@ void main() {
     expect(find.textContaining('Multfilm Klassika'), findsWidgets, reason: 'Kanallar ro\'yxati kelmadi');
     debugPrint('E2E: 3/6 Efir (guide/now) OK');
     // Video haqiqatan ochildimi: VideoPlayer widgeti faqat controller initialize bo'lganda chiziladi
-    expect(await waitFor(t, find.byType(VideoPlayer), seconds: 40), isTrue, reason: 'Video ochilmadi');
+    expect(await waitFor(t, find.byType(VideoPlayer), seconds: 90), isTrue, reason: 'Video ochilmadi');
     await wait(t, 6);
     debugPrint('E2E: 3b video o\'ynayapti OK');
     await wait(t, 2);

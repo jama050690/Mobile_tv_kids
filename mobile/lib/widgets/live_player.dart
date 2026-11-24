@@ -188,7 +188,8 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
 
     try {
       debugPrint('VID: init $url');
-      await vc.initialize().timeout(const Duration(seconds: 20));
+      // HLS ochilishi sekin tarmoqda 15-20s olishi mumkin — 45s kutamiz
+      await vc.initialize().timeout(const Duration(seconds: 45));
       debugPrint('VID: init OK dur=${vc.value.duration}');
       if (!mounted || token != _token || _vc != vc) {
         vc.dispose();
