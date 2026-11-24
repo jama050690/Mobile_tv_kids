@@ -187,7 +187,9 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
     if (mounted) setState(() {});
 
     try {
+      debugPrint('VID: init $url');
       await vc.initialize().timeout(const Duration(seconds: 20));
+      debugPrint('VID: init OK dur=${vc.value.duration}');
       if (!mounted || token != _token || _vc != vc) {
         vc.dispose();
         return;
@@ -199,9 +201,11 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
       await vc.setVolume(_settings.muted ? 0 : 1);
       if (_settings.timeIsUp) return; // limit tugagan — o'ynatmaymiz
       await vc.play();
+      debugPrint('VID: playing');
       WakelockPlus.enable();
       if (mounted) setState(() {});
     } catch (e) {
+      debugPrint('VID: ERR $e');
       if (token == _token) _onVideoError('init:${e.runtimeType}');
     }
   }
