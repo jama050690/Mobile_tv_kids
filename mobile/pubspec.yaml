@@ -44,6 +44,9 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Real qurilma/simulyatorda E2E test (integration_test/app_test.dart)
+  integration_test:
+    sdk: flutter
   # Ilova ikonkasini Android/iOS uchun barcha o'lchamlarda yaratadi
   flutter_launcher_icons: ^0.14.4
 
