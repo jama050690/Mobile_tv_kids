@@ -27,7 +27,8 @@ fi
 RSYNC_SSH="ssh $(printf '%q ' "${SSH_OPTS[@]}")"
 
 echo "==> $TARGET:$DIR papkasi tayyorlanmoqda"
-ssh "${SSH_OPTS[@]}" "$TARGET" "sudo mkdir -p '$DIR' && sudo chown \"\$(id -un)\" '$DIR'"
+# -n: stdin'ni o'qimasin (aks holda install.sh javoblarini "yutib" yuboradi)
+ssh -n "${SSH_OPTS[@]}" "$TARGET" "sudo mkdir -p '$DIR' && sudo chown \"\$(id -un)\" '$DIR'"
 
 echo "==> Fayllar yuborilmoqda (rsync)"
 # Tartib muhim: birinchi mos kelgan qoida ishlaydi (.env.example yuboriladi, .env — yo'q)
