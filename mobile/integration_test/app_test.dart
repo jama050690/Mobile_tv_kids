@@ -33,6 +33,9 @@ void main() {
 
   final noConnection = find.textContaining("aloqa yo'q");
 
+  /// Pastki navigatsiya tugmasi ("Kanallar" sarlavhasi Efir ekranida ham bor — shuning uchun faqat NavigationBar ichidan)
+  Finder tab(String label) => find.descendant(of: find.byType(NavigationBar), matching: find.text(label));
+
   testWidgets('To\'liq oqim real server bilan', (t) async {
     // 1) Ilovani ishga tushiramiz
     await app.main();
@@ -61,26 +64,26 @@ void main() {
     await wait(t, 10); // video o'ynashi uchun vaqt (skrinshot olinadi)
 
     // 5) Kanallar katalogi
-    await t.tap(find.text('Kanallar'));
+    await t.tap(tab('Kanallar'));
     await wait(t, 6);
     expect(find.textContaining('Multfilm Klassika'), findsWidgets);
     debugPrint('E2E: 4/6 Kanallar OK');
 
     // 6) Dastur (EPG) — /channels/:ref/schedule
-    await t.tap(find.text('Dastur'));
+    await t.tap(tab('Dastur'));
     expect(await waitFor(t, find.textContaining('[DEMO]')), isTrue, reason: 'Dastur jadvali kelmadi');
     await wait(t, 6);
     debugPrint('E2E: 5/6 Dastur OK');
 
     // 7) Sozlamalar
-    await t.tap(find.text('Sozlamalar'));
+    await t.tap(tab('Sozlamalar'));
     await wait(t, 6);
     // Server manzili ro'yxat pastida — ekranda bo'lmasligi mumkin, shuning uchun faqat log
     final host = find.textContaining('://');
     debugPrint('E2E: 6/6 Sozlamalar OK${host.evaluate().isNotEmpty ? ' (server: ${(host.evaluate().first.widget as Text).data})' : ''}');
 
     // Efirga qaytib, videoni yana ko'ramiz
-    await t.tap(find.text('Efir'));
+    await t.tap(tab('Efir'));
     await wait(t, 8);
   });
 }

@@ -378,14 +378,17 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
     }
     if (text == null) return const SizedBox.shrink();
 
-    final next = _now?.next;
+    // Overlay ko'rinib turganda "Keyingisi" pastki panelda allaqachon bor —
+    // markazda takrorlasak kichik playerda matnlar ustma-ust tushadi.
+    final overlayVisible = _overlay || !(vc?.value.isInitialized ?? false);
+    final next = overlayVisible ? null : _now?.next;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 52, color: AppTheme.accent),
-          const SizedBox(height: 10),
-          Text(text, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          Icon(icon, size: 40, color: AppTheme.accent),
+          const SizedBox(height: 6),
+          Text(text, textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           if (next != null) ...[
             const SizedBox(height: 6),
             Text(
