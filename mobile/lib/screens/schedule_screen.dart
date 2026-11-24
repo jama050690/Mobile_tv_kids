@@ -255,7 +255,7 @@ class _SlotRow extends StatelessWidget {
                     ]),
                     const SizedBox(height: 4),
                     Row(children: [
-                      AgeBadge.rating(slot.program.ageRating),
+                      AgeBadge.group(slot.program.ageRating),
                       const SizedBox(width: 8),
                       Text('${minutesCeil(slot.durationSec)} min', style: const TextStyle(fontSize: 12, color: AppTheme.textDim)),
                     ]),

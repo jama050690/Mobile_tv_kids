@@ -474,7 +474,7 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
                       maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 ),
                 const SizedBox(width: 8),
-                AgeBadge.rating(cur.program.ageRating),
+                AgeBadge.group(cur.program.ageRating),
               ]),
               const SizedBox(height: 8),
               Row(children: [

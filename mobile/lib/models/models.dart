@@ -74,7 +74,8 @@ class ProgramInfo {
   final String title;
   final String? description;
   final String? thumbnailUrl;
-  final int ageRating;
+  /// Backend'da ham AgeGroup enum ("AGE_0_3" | "AGE_4_7" | "AGE_8_12" | "ALL")
+  final AgeGroup ageRating;
   final int durationSec;
 
   factory ProgramInfo.fromJson(Map<String, dynamic> j) => ProgramInfo(
@@ -82,7 +83,7 @@ class ProgramInfo {
         title: j['title'] as String,
         description: j['description'] as String?,
         thumbnailUrl: j['thumbnailUrl'] as String?,
-        ageRating: (j['ageRating'] as num?)?.toInt() ?? 0,
+        ageRating: AgeGroup.parse(j['ageRating']),
         durationSec: (j['durationSec'] as num?)?.toInt() ?? 0,
       );
 }

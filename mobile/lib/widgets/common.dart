@@ -10,10 +10,6 @@ class AgeBadge extends StatelessWidget {
   /// Kanal yosh toifasi
   factory AgeBadge.group(AgeGroup g, {Key? key}) => AgeBadge._(g.label, g.label, key: key);
 
-  /// Dastur yosh chegarasi (ageRating: 0, 3, 6 ...) — "6+"
-  factory AgeBadge.rating(int rating, {Key? key}) =>
-      AgeBadge._('$rating+', rating <= 3 ? '0-3' : (rating <= 7 ? '4-7' : '8-12'), key: key);
-
   final String label;
   final String colorKey;
 
