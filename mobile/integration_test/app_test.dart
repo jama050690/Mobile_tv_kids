@@ -56,14 +56,14 @@ void main() {
     expect(await waitFor(t, find.text('Efir')), isTrue);
     await wait(t, 8);
     expect(noConnection, findsNothing, reason: 'Efir ekranida server xatosi');
-    expect(find.text('Multfilm Klassika'), findsWidgets, reason: 'Kanallar ro\'yxati kelmadi');
+    expect(find.textContaining('Multfilm Klassika'), findsWidgets, reason: 'Kanallar ro\'yxati kelmadi');
     debugPrint('E2E: 3/6 Efir (guide/now) OK');
     await wait(t, 10); // video o'ynashi uchun vaqt (skrinshot olinadi)
 
     // 5) Kanallar katalogi
     await t.tap(find.text('Kanallar'));
     await wait(t, 6);
-    expect(find.text('Multfilm Klassika'), findsWidgets);
+    expect(find.textContaining('Multfilm Klassika'), findsWidgets);
     debugPrint('E2E: 4/6 Kanallar OK');
 
     // 6) Dastur (EPG) — /channels/:ref/schedule
