@@ -41,33 +41,35 @@ const DEMO_CHANNELS = [
   { slug: 'inglizcha', title: 'Inglizcha', number: 3, ageGroup: AgeGroup.AGE_4_7, description: "Ingliz tilidagi multfilmlar" },
 ];
 
-// Ochiq test videolari (faqat demo/test uchun — production'da o'z kontentingiz bilan almashtiring)
+// Ochiq test videolari (faqat demo/test uchun — production'da o'z kontentingiz bilan almashtiring).
+// Eslatma: Google'ning gtv-videos-bucket (MP4 va rasmlar) endi 403 qaytaradi — ishlatilmaydi.
+// Oqim davomiyligi slot davomiyligidan kam bo'lmasligi kerak (mux BBB ≈ 635s, Angel One = 60s).
 const DEMO_PROGRAMS = [
   {
     title: '[DEMO] Big Buck Bunny (HLS)',
     videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-    fallbackUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    fallbackUrl: null,
     streamType: StreamType.HLS,
     durationSec: 596,
-    thumbnailUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg',
+    thumbnailUrl: null,
     ageRating: AgeGroup.ALL,
   },
   {
-    title: '[DEMO] Big Buck Bunny (MP4)',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    title: '[DEMO] Big Buck Bunny (HLS 2)',
+    videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
     fallbackUrl: null,
-    streamType: StreamType.MP4,
+    streamType: StreamType.HLS,
     durationSec: 596,
-    thumbnailUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg',
+    thumbnailUrl: null,
     ageRating: AgeGroup.ALL,
   },
   {
-    title: '[DEMO] For Bigger Fun',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    title: '[DEMO] Angel One (HLS)',
+    videoUrl: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8',
     fallbackUrl: null,
-    streamType: StreamType.MP4,
+    streamType: StreamType.HLS,
     durationSec: 60,
-    thumbnailUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerFun.jpg',
+    thumbnailUrl: null,
     ageRating: AgeGroup.AGE_4_7,
   },
 ];
