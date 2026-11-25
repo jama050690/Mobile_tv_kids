@@ -96,7 +96,6 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    debugPrint('VID: lifecycle $state');
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       _vc?.pause();
     } else if (state == AppLifecycleState.resumed) {
@@ -188,12 +187,8 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
     if (mounted) setState(() {});
 
     try {
-      debugPrint('VID: init $url');
-      void dbg() => debugPrint('VID: value init=${vc.value.isInitialized} err=${vc.value.errorDescription} buf=${vc.value.isBuffering}');
-      vc.addListener(dbg);
       // HLS ochilishi sekin tarmoqda 15-20s olishi mumkin — 45s kutamiz
       await vc.initialize().timeout(const Duration(seconds: 45));
-      debugPrint('VID: init OK dur=${vc.value.duration}');
       if (!mounted || token != _token || _vc != vc) {
         vc.dispose();
         return;
@@ -205,11 +200,9 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
       await vc.setVolume(_settings.muted ? 0 : 1);
       if (_settings.timeIsUp) return; // limit tugagan — o'ynatmaymiz
       await vc.play();
-      debugPrint('VID: playing');
       WakelockPlus.enable();
       if (mounted) setState(() {});
     } catch (e) {
-      debugPrint('VID: ERR $e');
       if (token == _token) _onVideoError('init:${e.runtimeType}');
     }
   }
@@ -252,7 +245,6 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
   }
 
   void _disposeVideo() {
-    debugPrint('VID: dispose ${_vc != null} ${StackTrace.current.toString().split('\n').skip(1).take(2).join(' | ')}');
     final vc = _vc;
     _vc = null;
     if (vc != null) {
