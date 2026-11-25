@@ -10,6 +10,7 @@ import 'services/server_clock.dart';
 import 'state/guide_store.dart';
 import 'state/settings_store.dart';
 import 'theme.dart';
+import 'widgets/night_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -98,7 +99,8 @@ class _KidsTvAppState extends State<KidsTvApp> with WidgetsBindingObserver {
           ? const OnboardingScreen()
           : !settings.hasChild
               ? const ChildSetupScreen()
-              : const HomeShell(),
+              // 21:00 — 07:00: TV yopiq, okean va baliqlar
+              : const NightGate(child: HomeShell()),
     );
   }
 }
