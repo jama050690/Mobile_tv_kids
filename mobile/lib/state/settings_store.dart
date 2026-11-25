@@ -23,6 +23,8 @@ class SettingsStore extends ChangeNotifier {
   static const _kLimit = 'limitMinutes';
   static const _kWatchedDay = 'watchedDay';
   static const _kWatchedSec = 'watchedSec';
+  static const _kChildName = 'childName';
+  static const _kChildAge = 'childAge';
 
   static Future<SettingsStore> load() async => SettingsStore(await SharedPreferences.getInstance());
 
@@ -52,6 +54,20 @@ class SettingsStore extends ChangeNotifier {
 
   Future<void> completeOnboarding() async {
     await _prefs.setBool(_kOnboarded, true);
+    notifyListeners();
+  }
+
+  // ---- Bolajon: ism va yosh (onboarding'da so'raladi) ----
+  String get childName => (_prefs.getString(_kChildName) ?? '').trim();
+  int? get childAge => _prefs.getInt(_kChildAge);
+  bool get hasChild => childName.isNotEmpty && childAge != null;
+
+  /// Xabarlarda murojaat: ism bo'lmasa — "bolajon"
+  String get displayName => childName.isNotEmpty ? childName : s.t('kid');
+
+  Future<void> setChild({required String name, required int age}) async {
+    await _prefs.setString(_kChildName, name.trim());
+    await _prefs.setInt(_kChildAge, age);
     notifyListeners();
   }
 
