@@ -93,7 +93,12 @@ class _KidsTvAppState extends State<KidsTvApp> with WidgetsBindingObserver {
       title: settings.s.t('appName'),
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
-      home: settings.onboarded ? const HomeShell() : const OnboardingScreen(),
+      // TV'ga kirishdan oldin: onboarding -> bolajon ismi/yoshi -> efir
+      home: !settings.onboarded
+          ? const OnboardingScreen()
+          : !settings.hasChild
+              ? const ChildSetupScreen()
+              : const HomeShell(),
     );
   }
 }

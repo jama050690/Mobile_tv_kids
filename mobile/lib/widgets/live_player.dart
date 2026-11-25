@@ -362,6 +362,7 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
   Widget _statusView(S s, VideoPlayerController? vc) {
     String? text;
     IconData icon = Icons.tv_rounded;
+    var noCartoon = false;
     if (_netError) {
       text = s.t('error');
       icon = Icons.wifi_off_rounded;
@@ -370,26 +371,36 @@ class _LivePlayerState extends State<LivePlayer> with WidgetsBindingObserver {
     } else if (_videoFailed || _now?.status == OnAirStatus.unavailable) {
       text = s.t('unavailable');
       icon = Icons.ondemand_video_rounded;
-    } else if (_now?.status == OnAirStatus.filler) {
-      text = s.t('filler');
-      icon = Icons.celebration_rounded;
-    } else if (_now?.status == OnAirStatus.offAir) {
-      text = s.t('offAir');
-      icon = Icons.nightlight_round;
+    } else if (_now?.status == OnAirStatus.filler || _now?.status == OnAirStatus.offAir) {
+      // Hozir multfilm yo'q: bolaga ismi bilan murojaat qilib, keyingi multfilm vaqtini aytamiz
+      final next = _now?.next;
+      final name = _settings.displayName;
+      text = next != null
+          ? s.f('noCartoonAt', {'name': name, 'time': next.startClock})
+          : s.f('noCartoon', {'name': name});
+      icon = Icons.menu_book_rounded;
+      noCartoon = true;
     }
     if (text == null) return const SizedBox.shrink();
 
     // Overlay ko'rinib turganda "Keyingisi" pastki panelda allaqachon bor —
     // markazda takrorlasak kichik playerda matnlar ustma-ust tushadi.
+    // "Uzr..." xabarida vaqt allaqachon aytilgan — takrorlamaymiz.
     final overlayVisible = _overlay || !(vc?.value.isInitialized ?? false);
-    final next = overlayVisible ? null : _now?.next;
+    final next = overlayVisible || noCartoon ? null : _now?.next;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 40, color: AppTheme.accent),
+          Icon(icon, size: noCartoon ? 34 : 40, color: AppTheme.accent),
           const SizedBox(height: 6),
-          Text(text, textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            maxLines: noCartoon ? 4 : 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: noCartoon ? 15 : 16, fontWeight: FontWeight.w700, height: 1.25),
+          ),
           if (next != null) ...[
             const SizedBox(height: 6),
             Text(

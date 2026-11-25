@@ -7,8 +7,9 @@ import '../models/models.dart';
 import '../services/api_client.dart';
 import '../state/settings_store.dart';
 import '../theme.dart';
+import '../widgets/child_form.dart';
 
-/// Splash & Onboarding: 1) til  2) davlat / timezone (qurilmadan avto-aniqlash + qo'lda tanlash)
+/// Splash & Onboarding: 1) til  2) bolajon ismi va yoshi  3) davlat / timezone (qurilmadan avto-aniqlash + qo'lda tanlash)
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key, this.editMode = false});
 
@@ -20,7 +21,7 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  late int _step = widget.editMode ? 1 : 0;
+  late int _step = widget.editMode ? 2 : 0;
 
   List<Region> _regions = const [];
   String? _deviceTz;
@@ -87,7 +88,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
-          child: _step == 0 ? _languageStep(settings) : _regionStep(s),
+          child: switch (_step) {
+            0 => _languageStep(settings),
+            1 => _childStep(settings),
+            _ => _regionStep(s),
+          },
         ),
       ),
     );
@@ -127,7 +132,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // ---------------- 2-qadam: davlat / timezone ----------------
+  // ---------------- 2-qadam: bolajon ismi va yoshi ----------------
+  Widget _childStep(SettingsStore settings) {
+    final s = settings.s;
+    return SingleChildScrollView(
+      key: const ValueKey('child'),
+      padding: const EdgeInsets.all(24),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          IconButton(onPressed: () => setState(() => _step = 0), icon: const Icon(Icons.arrow_back_rounded)),
+          const SizedBox(width: 4),
+          Expanded(child: Text(s.t('childStep'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900))),
+        ]),
+        const SizedBox(height: 8),
+        const Text('👶🧒👧', textAlign: TextAlign.center, style: TextStyle(fontSize: 56)),
+        const SizedBox(height: 16),
+        ChildForm(
+          s: s,
+          buttonLabel: s.t('continue'),
+          initialName: settings.childName,
+          initialAge: settings.childAge,
+          onSubmit: (name, age) async {
+            FocusScope.of(context).unfocus();
+            await settings.setChild(name: name, age: age);
+            if (mounted) setState(() => _step = 2);
+          },
+        ),
+      ]),
+    );
+  }
+
+  // ---------------- 3-qadam: davlat / timezone ----------------
   Widget _regionStep(S s) {
     if (_loading) return const Center(key: ValueKey('loading'), child: CircularProgressIndicator());
 
@@ -227,4 +262,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ),
       );
+}
+
+/// Onboarding'ni oldin tugatgan, lekin ism/yosh kiritmagan foydalanuvchi uchun:
+/// TV'ga kirishdan oldin bolajon ma'lumotlarini so'raydi.
+class ChildSetupScreen extends StatelessWidget {
+  const ChildSetupScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsStore>();
+    final s = settings.s;
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text(s.t('childStep'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 8),
+            const Text('👶🧒👧', textAlign: TextAlign.center, style: TextStyle(fontSize: 56)),
+            const SizedBox(height: 16),
+            ChildForm(
+              s: s,
+              buttonLabel: s.t('start'),
+              onSubmit: (name, age) => settings.setChild(name: name, age: age),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
 }

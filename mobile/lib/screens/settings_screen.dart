@@ -5,6 +5,7 @@ import '../config.dart';
 import '../l10n/strings.dart';
 import '../state/settings_store.dart';
 import '../theme.dart';
+import '../widgets/child_form.dart';
 import '../widgets/pin_dialog.dart';
 import 'onboarding_screen.dart';
 
@@ -24,6 +25,36 @@ class SettingsScreen extends StatelessWidget {
       child: ListView(padding: const EdgeInsets.all(16), children: [
         Text(s.t('settings'), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900)),
         const SizedBox(height: 16),
+
+        // ---------------- Bolajon ----------------
+        _section(s.t('child')),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.child_care_rounded, color: AppTheme.accent),
+            title: Text(st.childName.isEmpty ? '—' : st.childName),
+            subtitle: st.childAge != null ? Text(s.f('ageYears', {'n': st.childAge!})) : null,
+            trailing: const Icon(Icons.edit_rounded),
+            onTap: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              builder: (ctx) => Padding(
+                // Klaviatura ochilganda forma yopilib qolmasin
+                padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.of(ctx).viewInsets.bottom),
+                child: ChildForm(
+                  s: s,
+                  buttonLabel: s.t('save'),
+                  initialName: st.childName,
+                  initialAge: st.childAge,
+                  onSubmit: (name, age) async {
+                    await st.setChild(name: name, age: age);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
 
         // ---------------- Til ----------------
         _section(s.t('language')),
