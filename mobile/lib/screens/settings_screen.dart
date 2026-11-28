@@ -73,14 +73,10 @@ class SettingsScreen extends StatelessWidget {
         _section(s.t('region')),
         Card(
           child: ListTile(
-            leading: const Icon(Icons.public_rounded, color: AppTheme.accent),
-            title: Text(st.timezone),
-            subtitle: st.country != null ? Text(st.country!) : null,
-            trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () async {
-              if (!await verifyParent(context) || !context.mounted) return;
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const OnboardingScreen(editMode: true)));
-            },
+            // Faqat ko'rsatiladi: telefon signali (qurilma timezone'i) bo'yicha avtomatik aniqlanadi
+            leading: const Icon(Icons.my_location_rounded, color: AppTheme.accent),
+            title: Text(st.country != null ? '${st.country} · ${st.timezone}' : st.timezone),
+            subtitle: Text(s.t('detected')),
           ),
         ),
         const SizedBox(height: 20),

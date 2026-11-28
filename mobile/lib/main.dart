@@ -6,6 +6,7 @@ import 'screens/home_shell.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/api_client.dart';
 import 'services/events_service.dart';
+import 'services/region_detector.dart';
 import 'services/server_clock.dart';
 import 'state/guide_store.dart';
 import 'state/settings_store.dart';
@@ -26,6 +27,10 @@ Future<void> main() async {
   final events = EventsService();
   final guide = GuideStore(api: api, events: events, settings: settings);
 
+  // 4) Davlat/timezone — telefon signali bo'yicha avtomatik (qo'lda tanlash yo'q)
+  final region = RegionDetector(api: api, settings: settings);
+  if (settings.onboarded) region.detect(); // fonda; o'zgarsa GuideStore o'zi qayta yuklaydi
+
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider.value(value: settings),
@@ -33,6 +38,7 @@ Future<void> main() async {
       Provider.value(value: api),
       Provider.value(value: events),
       ChangeNotifierProvider.value(value: guide),
+      Provider.value(value: region),
     ],
     child: const KidsTvApp(),
   ));
@@ -72,6 +78,8 @@ class _KidsTvAppState extends State<KidsTvApp> with WidgetsBindingObserver {
       events.stop();
       guide.pause();
     } else if (state == AppLifecycleState.resumed) {
+      // Telefon boshqa davlatga o'tgan bo'lishi mumkin — mintaqani qayta aniqlaymiz
+      context.read<RegionDetector>().detect();
       events.start();
       guide.refresh();
     }

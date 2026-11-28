@@ -54,16 +54,9 @@ void main() {
     await t.testTextInput.receiveAction(TextInputAction.done);
     await wait(t, 1);
     debugPrint('E2E: 1b/6 ism OK');
-    await t.tap(find.text('Davom etish'));
-
-    // 3) Onboarding — mintaqa: serverdan /regions va /regions/resolve yuklanadi
-    expect(await waitFor(t, find.text('Boshlash')), isTrue);
-    await wait(t, 4);
-    expect(noConnection, findsNothing, reason: 'Mintaqa ekranida server xatosi');
-    expect(find.byIcon(Icons.my_location_rounded), findsOneWidget, reason: 'Davlat avtomatik aniqlanmadi');
-    debugPrint('E2E: 2/6 mintaqa avto-aniqlandi OK');
-    await wait(t, 2);
+    // 3) Mintaqa so'ralmaydi — /regions/resolve orqali fonda avto-aniqlanadi
     await t.tap(find.text('Boshlash'));
+    debugPrint('E2E: 2/6 mintaqa avto-aniqlash (ekransiz) OK');
 
     // 4) Efir ekrani — /guide/now
     expect(await waitFor(t, find.text('Efir')), isTrue);

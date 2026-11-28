@@ -20,35 +20,33 @@ class RegionDetector {
   final SettingsStore settings;
 
   static const _fallbackTz = 'Asia/Tashkent';
-  bool _running = false;
 
-  Future<void> detect() async {
-    if (_running) return;
-    _running = true;
+  /// Ayni paytda ketayotgan aniqlash — parallel chaqiruvlar shu bitta natijani kutadi
+  Future<void>? _pending;
+
+  Future<void> detect() => _pending ??= _run().whenComplete(() => _pending = null);
+
+  Future<void> _run() async {
+    // 1) Qurilma timezone'i (telefon signali bo'yicha o'rnatilgan)
+    String tz;
     try {
-      // 1) Qurilma timezone'i
-      String tz;
-      try {
-        tz = (await FlutterTimezone.getLocalTimezone()).identifier;
-      } catch (_) {
-        tz = settings.timezone.isNotEmpty ? settings.timezone : _fallbackTz;
-      }
+      tz = (await FlutterTimezone.getLocalTimezone()).identifier;
+    } catch (_) {
+      tz = settings.timezone.isNotEmpty ? settings.timezone : _fallbackTz;
+    }
 
-      // 2) Davlatni server orqali aniqlash; server javob bermasa — faqat timezone bilan davom etamiz
-      String? country;
-      try {
-        country = (await api.resolveRegion(tz)).regionCode;
-      } catch (_) {
-        // Zona o'zgarmagan bo'lsa, oldingi davlat kodi saqlanib qoladi
-        country = tz == settings.timezone ? settings.country : null;
-      }
+    // 2) Davlatni server orqali aniqlash; server javob bermasa — faqat timezone bilan davom etamiz
+    String? country;
+    try {
+      country = (await api.resolveRegion(tz)).regionCode;
+    } catch (_) {
+      // Zona o'zgarmagan bo'lsa, oldingi davlat kodi saqlanib qoladi
+      country = tz == settings.timezone ? settings.country : null;
+    }
 
-      // 3) Faqat o'zgargan bo'lsa yozamiz (keraksiz qayta yuklashlarsiz)
-      if (tz != settings.timezone || country != settings.country) {
-        await settings.setRegion(timezone: tz, country: country);
-      }
-    } finally {
-      _running = false;
+    // 3) Faqat o'zgargan bo'lsa yozamiz (keraksiz qayta yuklashlarsiz)
+    if (tz != settings.timezone || country != settings.country) {
+      await settings.setRegion(timezone: tz, country: country);
     }
   }
 }
