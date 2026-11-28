@@ -32,7 +32,6 @@ class SettingsScreen extends StatelessWidget {
           child: ListTile(
             leading: const Icon(Icons.child_care_rounded, color: AppTheme.accent),
             title: Text(st.childName.isEmpty ? '—' : st.childName),
-            subtitle: st.childAge != null ? Text(s.f('ageYears', {'n': st.childAge!})) : null,
             trailing: const Icon(Icons.edit_rounded),
             onTap: () => showModalBottomSheet<void>(
               context: context,
@@ -44,9 +43,8 @@ class SettingsScreen extends StatelessWidget {
                   s: s,
                   buttonLabel: s.t('save'),
                   initialName: st.childName,
-                  initialAge: st.childAge,
-                  onSubmit: (name, age) async {
-                    await st.setChild(name: name, age: age);
+                  onSubmit: (name) async {
+                    await st.setChild(name: name);
                     if (ctx.mounted) Navigator.pop(ctx);
                   },
                 ),

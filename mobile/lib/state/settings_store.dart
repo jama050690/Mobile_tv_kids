@@ -57,17 +57,17 @@ class SettingsStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ---- Bolajon: ism va yosh (onboarding'da so'raladi) ----
+  // ---- Bolajon: faqat ism (onboarding'da so'raladi, yosh so'ralmaydi) ----
   String get childName => (_prefs.getString(_kChildName) ?? '').trim();
-  int? get childAge => _prefs.getInt(_kChildAge);
-  bool get hasChild => childName.isNotEmpty && childAge != null;
+  bool get hasChild => childName.isNotEmpty;
 
   /// Xabarlarda murojaat: ism bo'lmasa — "bolajon"
   String get displayName => childName.isNotEmpty ? childName : s.t('kid');
 
-  Future<void> setChild({required String name, required int age}) async {
+  Future<void> setChild({required String name}) async {
     await _prefs.setString(_kChildName, name.trim());
-    await _prefs.setInt(_kChildAge, age);
+    // Eski versiyada saqlangan yoshni o'chiramiz — endi kerak emas
+    await _prefs.remove(_kChildAge);
     notifyListeners();
   }
 

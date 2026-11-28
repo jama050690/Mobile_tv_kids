@@ -48,14 +48,12 @@ void main() {
     debugPrint('E2E: 1/6 til ekrani OK');
     await t.tap(find.text('Davom etish'));
 
-    // 2b) Onboarding — bolajon ismi va yoshi
-    expect(await waitFor(t, find.byKey(const ValueKey('childName'))), isTrue, reason: 'Ism/yosh ekrani chiqmadi');
+    // 2b) Onboarding — bolajon ismi (yosh so'ralmaydi)
+    expect(await waitFor(t, find.byKey(const ValueKey('childName'))), isTrue, reason: 'Ism ekrani chiqmadi');
     await t.enterText(find.byKey(const ValueKey('childName')), 'Ali');
     await t.testTextInput.receiveAction(TextInputAction.done);
     await wait(t, 1);
-    await t.tap(find.text('5 yosh'));
-    await wait(t, 1);
-    debugPrint('E2E: 1b/6 ism va yosh OK');
+    debugPrint('E2E: 1b/6 ism OK');
     await t.tap(find.text('Davom etish'));
 
     // 3) Onboarding — mintaqa: serverdan /regions va /regions/resolve yuklanadi

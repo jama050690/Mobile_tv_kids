@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/strings.dart';
 import '../theme.dart';
 
-/// Bolajon ma'lumotlari: ism + yosh (2..12).
+/// Bolajon ma'lumotlari: faqat ism (yosh so'ralmaydi).
 /// Onboarding'da ham, Sozlamalarda ham ishlatiladi.
 class ChildForm extends StatefulWidget {
   const ChildForm({
@@ -12,16 +12,12 @@ class ChildForm extends StatefulWidget {
     required this.buttonLabel,
     required this.onSubmit,
     this.initialName = '',
-    this.initialAge,
   });
 
   final S s;
   final String buttonLabel;
   final String initialName;
-  final int? initialAge;
-  final void Function(String name, int age) onSubmit;
-
-  static const ages = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  final void Function(String name) onSubmit;
 
   @override
   State<ChildForm> createState() => _ChildFormState();
@@ -29,7 +25,6 @@ class ChildForm extends StatefulWidget {
 
 class _ChildFormState extends State<ChildForm> {
   late final _name = TextEditingController(text: widget.initialName);
-  late int? _age = widget.initialAge;
 
   @override
   void initState() {
@@ -44,13 +39,16 @@ class _ChildFormState extends State<ChildForm> {
     super.dispose();
   }
 
-  bool get _valid => _name.text.trim().isNotEmpty && _age != null;
+  bool get _valid => _name.text.trim().isNotEmpty;
+
+  void _submit() {
+    if (_valid) widget.onSubmit(_name.text.trim());
+  }
 
   @override
   Widget build(BuildContext context) {
     final s = widget.s;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
-      // ---- Ism ----
       Text(s.t('childName'), style: const TextStyle(fontWeight: FontWeight.w700)),
       const SizedBox(height: 8),
       TextField(
@@ -69,22 +67,9 @@ class _ChildFormState extends State<ChildForm> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
         ),
       ),
-      const SizedBox(height: 20),
-      // ---- Yosh ----
-      Text(s.t('childAge'), style: const TextStyle(fontWeight: FontWeight.w700)),
-      const SizedBox(height: 8),
-      Wrap(spacing: 8, runSpacing: 8, children: [
-        for (final a in ChildForm.ages)
-          ChoiceChip(
-            showCheckmark: false,
-            label: Text(s.f('ageYears', {'n': a}), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            selected: _age == a,
-            onSelected: (_) => setState(() => _age = a),
-          ),
-      ]),
       const SizedBox(height: 24),
       FilledButton(
-        onPressed: _valid ? () => widget.onSubmit(_name.text.trim(), _age!) : null,
+        onPressed: _valid ? _submit : null,
         child: Text(widget.buttonLabel),
       ),
     ]);

@@ -9,7 +9,7 @@ import '../state/settings_store.dart';
 import '../theme.dart';
 import '../widgets/child_form.dart';
 
-/// Splash & Onboarding: 1) til  2) bolajon ismi va yoshi  3) davlat / timezone (qurilmadan avto-aniqlash + qo'lda tanlash)
+/// Splash & Onboarding: 1) til  2) bolajon ismi  3) davlat / timezone (avto-aniqlash)
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key, this.editMode = false});
 
@@ -132,7 +132,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // ---------------- 2-qadam: bolajon ismi va yoshi ----------------
+  // ---------------- 2-qadam: bolajon ismi ----------------
   Widget _childStep(SettingsStore settings) {
     final s = settings.s;
     return SingleChildScrollView(
@@ -151,10 +151,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           s: s,
           buttonLabel: s.t('continue'),
           initialName: settings.childName,
-          initialAge: settings.childAge,
-          onSubmit: (name, age) async {
+          onSubmit: (name) async {
             FocusScope.of(context).unfocus();
-            await settings.setChild(name: name, age: age);
+            await settings.setChild(name: name);
             if (mounted) setState(() => _step = 2);
           },
         ),
@@ -264,7 +263,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       );
 }
 
-/// Onboarding'ni oldin tugatgan, lekin ism/yosh kiritmagan foydalanuvchi uchun:
+/// Onboarding'ni oldin tugatgan, lekin ism kiritmagan foydalanuvchi uchun:
 /// TV'ga kirishdan oldin bolajon ma'lumotlarini so'raydi.
 class ChildSetupScreen extends StatelessWidget {
   const ChildSetupScreen({super.key});
@@ -285,7 +284,7 @@ class ChildSetupScreen extends StatelessWidget {
             ChildForm(
               s: s,
               buttonLabel: s.t('start'),
-              onSubmit: (name, age) => settings.setChild(name: name, age: age),
+              onSubmit: (name) => settings.setChild(name: name),
             ),
           ]),
         ),
