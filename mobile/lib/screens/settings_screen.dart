@@ -7,7 +7,6 @@ import '../state/settings_store.dart';
 import '../theme.dart';
 import '../widgets/child_form.dart';
 import '../widgets/pin_dialog.dart';
-import 'onboarding_screen.dart';
 
 /// Sozlamalar: til, mintaqa/timezone, ota-ona nazorati (PIN + kunlik limit).
 /// PIN o'rnatilgan bo'lsa — mintaqa va nazorat bo'limlari PIN bilan himoyalangan.
